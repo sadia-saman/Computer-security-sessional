@@ -61,46 +61,62 @@ b = BitVector(hexstring="4E")
 int_val = b.intValue()
 s = Sbox[int_val]
 s = BitVector(intVal=s, size=8)
-print(s.get_bitvector_in_hex())
+#print(s.get_bitvector_in_hex())
 
 AES_modulus = BitVector(bitstring='100011011')
 
 bv1 = BitVector(hexstring="02")
 bv2 = BitVector(hexstring="63")
 bv3 = bv1.gf_multiply_modular(bv2, AES_modulus, 8)
-print(bv3)
+#print(bv3)
 
 
 def g(word,round):
-
 ## circularbyteleftshiftof
-    word = np.roll(word,-1)
+    ret = []
+    i = 0
+    while i < 3:
+        ret.append(word[i+1])
+        i=i+1
+    ret.append(word[0])
 
 
 ## ByteSubstitution
     i = 0
     while i < 4:
-        word[i] = Sbox[int(word[i],16)]
+        ret[i] = Sbox[ret[i]]
         i=i+1
 
 ## adding round constant
-    rconst = [hex(round),0x00,0x00,0x00]
-    word = xor(word,rconst)
+    rconst = [round,0,0,0]
+    i = 0
+    while i < 4:
+        ret[i] = xor(ret[i],rconst[i])
+        i=i+1
+    return ret
+    
 
 
 
 
 def generate_round_key(key):
     round_keys = [[]]
-    round_keys[0] = key
+    round_keys.insert(0,key)
 
-    word0 = []
-    word1 = []
-    word2 = []
-    word3 = []
-    
+    rc=[0,1]
+       
     r=1
     while r<11 :
+        word0 = []
+        word1 = []
+        word2 = []
+        word3 = []
+        round_keys.append([])
+        if r>1:
+            if rc[r-1]<128:
+                rc.append(rc[r-1]*2)
+            else:
+                rc.append(xor((rc[r-1]*2),int(0x11B)))
         i=0
         while i<4:
             word0.append(key[i])
@@ -108,11 +124,34 @@ def generate_round_key(key):
             word2.append(key[8+i])
             word3.append(key[12+i])
             i = i+1
+
+        g_word3 = g(word3,rc[r])
         
-        word4 = xor(word0,g(word3,r))
-        word5 = xor(word4,word1)
-        word6 = xor(word5,word2)
-        word7 = xor(word6,word3)
+        word4 = []
+        word5 = []
+        word6 = []
+        word7 = []
+
+        i = 0
+        #print(word3,g_word3)
+        while i < 4:
+            word4.append(xor(word0[i],g_word3[i]))
+            i=i+1
+        
+        i = 0
+        while i < 4:
+            word5.append(xor(word4[i],word1[i]))
+            i=i+1
+
+        i = 0
+        while i < 4:    
+            word6.append(xor(word5[i],word2[i]))
+            i=i+1
+
+        i = 0
+        while i < 4:
+            word7.append(xor(word6[i],word3[i]))
+            i=i+1
 
         round_keys[r] = word4
         round_keys[r].extend(word5)
@@ -120,10 +159,16 @@ def generate_round_key(key):
         round_keys[r].extend(word7) 
         key = round_keys[r]
         r = r+1
+        
     return round_keys
         
 
 
+def perform_xor(a,b):
+    i = 0
+    ret = []
+    while i<len(a):
+        ret.append(hex(a[i]))
 
     
 
