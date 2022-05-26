@@ -194,15 +194,7 @@ def inverse_mix_column(block):
 
 def aes_encrypt(pt_block,round_keys):
     for round in range(11):
-        key_block = [[0 for _ in range(4)] for _ in range(4)]
-        r = 0
-        c = 0
-        for idx in range(16):
-            key_block[r][c]= round_keys[round][idx]
-            r = r+1
-            if(r==4):
-             c = c+1
-             r = 0
+        key_block = make_matrix_block(round_keys[round]) 
 
         if round>0 :
             for r in range(4):
@@ -227,16 +219,7 @@ def aes_encrypt(pt_block,round_keys):
 
 def AES_decrypt(cipher_block,round_keys):
     for round in range(11):
-        key_block = [[0 for _ in range(4)] for _ in range(4)]
-        r = 0
-        c = 0
-        for idx in range(16):
-            key_block[r][c]= round_keys[round][idx]
-            r = r+1
-            if(r==4):
-             c = c+1
-             r = 0
-
+        key_block = make_matrix_block(round_keys[10-round])
         #round key addition
         for r in range(4):
             for c in range(4):
@@ -258,7 +241,7 @@ def AES_decrypt(cipher_block,round_keys):
                     cipher_block[r][c] = InvSbox[cipher_block[r][c]]
 
     
-    deciphered_block = cipher_block
+    deciphered_block = matrixToLinear(cipher_block)
 
     return deciphered_block
 #.......................................................................
@@ -270,6 +253,16 @@ def print_block(block):
         print()
     print()
 
+def print_text(text):
+    for t in text:
+        print(chr(t),end="")
+    print("   [IN ASCII]")
+
+def print_hex(text):
+    for t in text:
+        print(hex(t)[2:],end="")
+    print("   [IN HEX]")
+        
 
 def make_linear_block(input):
     j = 0
@@ -320,19 +313,21 @@ def matrixToLinear(block):
 def generate_RSA_key(k):
     key1=0
     key2 =0
-    low = 2**(k-1)
-    high = 2**k
+    low = int(2**(k-1))
+    high = int(2**k)
+    #print(low,high)
     while low<high:
         bv = BitVector(intVal =low)
-        if bv.test_for_primality()==1:
+        if bv.test_for_primality()>0:
             if key1==0:
                 key1 = low
             else :
                 key2 =low
                 break
-
         low = low + 1
 
+    if key1==0 or key2==0 :
+        print("key not found",key1,key2)
     n = key1*key2
     psi = (key1-1) * (key2-1)
 
@@ -341,9 +336,8 @@ def generate_RSA_key(k):
     while low<psi :
         if (psi%low)!=0 :
             e =low
+            break
         low =low+1
-
-
     d = get_modular_inverse(e,psi)
 
     public_key = [e,n]
@@ -354,26 +348,27 @@ def generate_RSA_key(k):
 
 def rsa_encrypt(block,public_key):
     for i in range(len(block)):
-        block[i] = ((block**public_key[0]))%public_key[1]
+        block[i] = pow(block[i],public_key[0],public_key[1])
+    return block
 
 
 
 def rsa_decrypt(cipher_block,private_key):
+    #print(private_key)
     for i in range(len(cipher_block)):
-        cipher_block[i]=(cipher_block[i]**private_key[0])%private_key[1]
-
+        cipher_block[i]= pow(cipher_block[i],private_key[0],private_key[1])
+    return cipher_block
 
 
 def get_modular_inverse(val,mod):
-
-    i = 0
-    d = 0.1
-    while int(d)!=d:
-        d = ((mod*i)+1)/val
-        i = i+1
+    d = pow(val, -1, mod)
     return d
 
-        
+def convert_to_hex(input):
+    output=[]
+    for i in input:
+        output.append(ord(i))      
+    return output  
 
         
 
