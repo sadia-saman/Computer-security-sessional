@@ -1,3 +1,4 @@
+from http.server import CGIHTTPRequestHandler
 from operator import xor
 import numpy as np
 
@@ -70,6 +71,9 @@ bv2 = BitVector(hexstring="63")
 bv3 = bv1.gf_multiply_modular(bv2, AES_modulus, 8)
 #print(bv3)
 
+
+
+######..........................AES functions............................######
 
 def g(word,round):
 ## circularbyteleftshiftof
@@ -163,12 +167,219 @@ def generate_round_key(key):
     return round_keys
         
 
+def mix_column(block):
+    ret_block = [[0 for _ in range(4)] for _ in range(4)]
+    for r in range(4):
+        for c in range(4):
+            val = 0
+            for p in range(4):
+                b = Mixer[r][p].gf_multiply_modular(BitVector(intVal = block[p][c]), AES_modulus, 8)
+                val = xor(val,b.intValue())
+            ret_block[r][c] = val
+    return ret_block
 
-def perform_xor(a,b):
+
+def inverse_mix_column(block):
+    ret_block = [[0 for _ in range(4)] for _ in range(4)]
+    for r in range(4):
+        for c in range(4):
+            val = 0
+            for p in range(4):
+                b = InvMixer[r][p].gf_multiply_modular(BitVector(intVal = block[p][c]), AES_modulus, 8)
+                val = xor(val,b.intValue())
+            ret_block[r][c] = val
+    return ret_block   
+
+
+
+def aes_encrypt(pt_block,round_keys):
+    for round in range(11):
+        key_block = [[0 for _ in range(4)] for _ in range(4)]
+        r = 0
+        c = 0
+        for idx in range(16):
+            key_block[r][c]= round_keys[round][idx]
+            r = r+1
+            if(r==4):
+             c = c+1
+             r = 0
+
+        if round>0 :
+            for r in range(4):
+                for c in range(4):
+                    pt_block[r][c] = Sbox[pt_block[r][c]]
+            
+
+            for r in range(4):
+                pt_block[r] = np.roll(pt_block[r],r*-1)
+
+            if round<10:
+                pt_block=mix_column(pt_block)
+            #print_block(pt_block)
+
+        for r in range(4):
+            for c in range(4):
+                pt_block[r][c] =xor(pt_block[r][c],key_block[r][c])
+
+    return pt_block
+
+
+
+def AES_decrypt(cipher_block,round_keys):
+    for round in range(11):
+        key_block = [[0 for _ in range(4)] for _ in range(4)]
+        r = 0
+        c = 0
+        for idx in range(16):
+            key_block[r][c]= round_keys[round][idx]
+            r = r+1
+            if(r==4):
+             c = c+1
+             r = 0
+
+        #round key addition
+        for r in range(4):
+            for c in range(4):
+                cipher_block[r][c] =xor(cipher_block[r][c],key_block[r][c])
+
+        
+        if round<10 :
+            #inverse mix column
+            if round>0:
+                cipher_block=inverse_mix_column(cipher_block)
+
+            #inverse shift row
+            for r in range(4):
+                cipher_block[r] = np.roll(cipher_block[r],r)
+            
+            #Inverse substitute bytes
+            for r in range(4):
+                for c in range(4):
+                    cipher_block[r][c] = InvSbox[cipher_block[r][c]]
+
+    
+    deciphered_block = cipher_block
+
+    return deciphered_block
+#.......................................................................
+
+def print_block(block):
+    for r in range(4):
+        for c in range(4):
+            print(hex(block[r][c]),end=" ")
+        print()
+    print()
+
+
+def make_linear_block(input):
+    j = 0
+    padding = 32
+    block = []
+    while(j<16):
+        if j< len(input) :
+            block.append(ord(input[j]))
+        else:
+            block.append(padding)
+        j = j+1
+    return block
+
+
+def make_matrix_block(input):
+    mat_block = [[0 for _ in range(4)] for _ in range(4)]
+    r=0
+    c=0
+    j=0
+    while(j<16):
+        mat_block[r][c]= input[j]
+        j = j+1
+        r = r+1
+        if(r==4):
+             c = c+1
+             r = 0
+    return mat_block
+
+
+def matrixToLinear(block):
+    linear_block = []
+    r=0
+    c=0
+    j=0
+    while(j<16):
+        linear_block.append(block[r][c])
+        j = j+1
+        r = r+1
+        if(r==4):
+             c = c+1
+             r = 0
+    return linear_block
+
+
+
+####################.........RSA functions.....................##########################
+
+def generate_RSA_key(k):
+    key1=0
+    key2 =0
+    low = 2**(k-1)
+    high = 2**k
+    while low<high:
+        bv = BitVector(intVal =low)
+        if bv.test_for_primality()==1:
+            if key1==0:
+                key1 = low
+            else :
+                key2 =low
+                break
+
+        low = low + 1
+
+    n = key1*key2
+    psi = (key1-1) * (key2-1)
+
+    low = 2
+    e = 0
+    while low<psi :
+        if (psi%low)!=0 :
+            e =low
+        low =low+1
+
+
+    d = get_modular_inverse(e,psi)
+
+    public_key = [e,n]
+    private_key = [d,n]
+    return public_key,private_key
+
+
+
+def rsa_encrypt(block,public_key):
+    for i in range(len(block)):
+        block[i] = ((block**public_key[0]))%public_key[1]
+
+
+
+def rsa_decrypt(cipher_block,private_key):
+    for i in range(len(cipher_block)):
+        cipher_block[i]=(cipher_block[i]**private_key[0])%private_key[1]
+
+
+
+def get_modular_inverse(val,mod):
+
     i = 0
-    ret = []
-    while i<len(a):
-        ret.append(hex(a[i]))
+    d = 0.1
+    while int(d)!=d:
+        d = ((mod*i)+1)/val
+        i = i+1
+    return d
+
+        
+
+        
+
+
+
+    
 
     
 

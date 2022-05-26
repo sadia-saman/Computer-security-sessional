@@ -1,4 +1,3 @@
-from numpy import integer
 from _1705102_f2 import *
 
 #plain_text = input("plain text : ")
@@ -6,40 +5,28 @@ from _1705102_f2 import *
 plain_text = "Two One Nine Two"
 key = "Thats my Kung Fu"
 
-j = 0
-padding = 32
+#for rsa key k = 163264128
 
-key_hex = []
-while(j<16):
-    if j< len(key) :
-        key_hex.append(ord(key[j]))
-    else:
-        key_hex.append(padding)
-    j = j+1
+k =32
 
 
+key_hex = make_linear_block(key)
 round_keys = generate_round_key(key_hex)
 
 i=0
+cipher_text = []
 while(i<len(plain_text)):
-    j=i
-    pt_block = []
-    while(j<(i+16)):
-        if j< len(plain_text) :
-            pt_block.append(ord(plain_text[j]))
-        else:
-            pt_block.append(padding)
-        j = j+1
-    
-    
-    for idx in range(len(pt_block)):
-        pt_block[idx]=xor(pt_block[idx],round_keys[0][idx])
-
-    for idx in range(len(pt_block)):
-        pt_block[idx]=Sbox[pt_block[idx]]
-
-        print(hex(pt_block[idx]),end=" ")
-    print()
-
-
+    block = make_linear_block(plain_text[i:i+16])
     i = i+16
+    pt_block = make_matrix_block(block)
+    cipher_block = aes_encrypt(pt_block,round_keys)
+    cipher_text.extend(matrixToLinear(cipher_block))
+
+public_key,private_key = generate_RSA_key(k/2)
+encrypted_key = rsa_encrypt(round_keys[0],public_key)
+
+deciphered_text =AES_decrypt(cipher_text,round_keys)
+deciphered_key = rsa_decrypt(encrypted_key,private_key)
+
+print(deciphered_text)
+print(deciphered_key)
