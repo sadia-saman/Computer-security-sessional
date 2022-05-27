@@ -39,9 +39,9 @@ new_dir.mkdir(parents=True, exist_ok=True)
 
 
 str_ = ""+str(private_key[0])+" "+str(private_key[1])
-new_file = new_dir / 'keyfile.txt'
+new_file = new_dir / 'PRK.txt'
 new_file.write_text(str_)
-new_file = new_dir / 'textfile.txt'
+new_file = new_dir / 'DPT.txt'
 new_file.write_text("")
 
 #print(cipher_text,encrypted_key)

@@ -30,7 +30,7 @@ s.close()
 directory = "Don't Open this"
 parent_dir  = os.getcwd() 
 new_dir = os.path.join(parent_dir, directory)
-file = new_dir + '/keyfile.txt'
+file = new_dir + '/PRK.txt'
 
 check = False
 while check==False :
@@ -53,7 +53,7 @@ if len(msg)==2 :
     while i<len(text): 
         deciphered_text.extend(AES_decrypt(make_matrix_block(text[i:i+16]),round_keys))
         i= i +16
-    file = new_dir + '/textfile.txt'
+    file = new_dir + '/DPT.txt'
     my_file=  open(file, 'w')
     for t in deciphered_text:
         my_file.write(chr(t))

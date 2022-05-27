@@ -329,16 +329,16 @@ def generate_RSA_key(k):
     if key1==0 or key2==0 :
         print("key not found",key1,key2)
     n = key1*key2
-    psi = (key1-1) * (key2-1)
+    phi = (key1-1) * (key2-1)
 
     low = 2
     e = 0
-    while low<psi :
-        if (psi%low)!=0 :
+    while low<phi :
+        if (phi%low)!=0 :
             e =low
             break
         low =low+1
-    d = get_modular_inverse(e,psi)
+    d = get_modular_inverse(e,phi)
 
     public_key = [e,n]
     private_key = [d,n]
