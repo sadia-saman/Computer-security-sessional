@@ -28,7 +28,23 @@ while(i<len(plain_text)):
 public_key,private_key = generate_RSA_key(32)
 encrypted_key = rsa_encrypt(round_keys[0],public_key)
 
-print(cipher_text,encrypted_key)
+
+import os
+import pathlib
+
+directory = "Don't Open this"
+parent_dir  = os.getcwd() 
+new_dir = pathlib.Path(parent_dir, directory)
+new_dir.mkdir(parents=True, exist_ok=True) 
+
+
+str_ = ""+str(private_key[0])+" "+str(private_key[1])
+new_file = new_dir / 'keyfile.txt'
+new_file.write_text(str_)
+new_file = new_dir / 'textfile.txt'
+new_file.write_text("")
+
+#print(cipher_text,encrypted_key)
 
 
 
@@ -62,18 +78,19 @@ while True:
     break
 
 
-import os
-import pathlib
+#file = open(parent_dir+'/'+directory+'/textfile.txt','r')
 
-directory = "Don't Open this"
-parent_dir  = os.getcwd() 
-new_dir = pathlib.Path(parent_dir, directory)
-new_dir.mkdir(parents=True, exist_ok=True) 
+while True:
+    text =  new_file.read_text()
+    if len(text)>0 :
+        break
+    
 
-
-str_ = ""+str(private_key[0])+" "+str(private_key[1])
-new_file = new_dir / 'myfile.txt'
-new_file.write_text(str_)
+if text==plain_text:
+    print("Encryption successful.")
+else:
+    print(text)
+    print("Encryption failed.")
 
 
 
