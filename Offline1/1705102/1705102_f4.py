@@ -8,7 +8,11 @@ deciphered_key = rsa_decrypt(encrypted_key,private_key)
 for d in deciphered_key:
     print(chr(int(d)),end="")"""
 
+import importlib
+
+#hhh = importlib.import_module('1705102_f2')
 from _1705102_f2 import *
+
 
 
 K = [16, 32, 64,128]

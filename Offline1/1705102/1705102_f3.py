@@ -6,13 +6,10 @@
 from _1705102_f2 import *
 from time import *
 
-#plain_text = input("plain text : ")
-#key = input("key : ")
-plain_text = "Two One Nine Two"
-key = "Thats my Kung Fu"
-
-#for rsa key 
-k = 32
+plain_text = input("plain text : ")
+key = input("key : ")
+""" plain_text = "Two One Nine Two"
+key = "Thats my Kung Fu" """
 
 
 #.. round key generation
@@ -25,7 +22,10 @@ i=0
 encryption_time = 0
 cipher_text = []
 while(i<len(plain_text)):
-    block = make_linear_block(plain_text[i:i+16])
+    if(len(plain_text[i:])<16):
+        block = make_linear_block(plain_text[i:])
+    else:
+        block = make_linear_block(plain_text[i:i+16])
     i = i+16
     pt_block = make_matrix_block(block)
     start = time()
